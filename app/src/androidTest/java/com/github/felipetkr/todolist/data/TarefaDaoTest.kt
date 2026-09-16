@@ -6,7 +6,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,6 +25,7 @@ class TarefaDaoTest {
             ApplicationProvider.getApplicationContext(),
             TarefaDatabase::class.java
         ).allowMainThreadQueries().build()
+
         dao = database.tarefaDao()
     }
 
@@ -40,9 +43,9 @@ class TarefaDaoTest {
         dao.inserir(tarefa)
 
         val tarefas = dao.listarTodas().first()
-        Assert.assertEquals(1, tarefas.size)
-        Assert.assertEquals("Estudar Room", tarefas[0].titulo)
-        Assert.assertFalse(tarefas[0].concluida)
+        assertEquals(1, tarefas.size)
+        assertEquals("Estudar Room", tarefas[0].titulo)
+        assertFalse(tarefas[0].concluida)
     }
 
     @Test
@@ -53,7 +56,7 @@ class TarefaDaoTest {
         dao.atualizar(inserida.copy(concluida = true))
 
         val atualizada = dao.listarTodas().first().first()
-        Assert.assertTrue(atualizada.concluida)
+        assertTrue(atualizada.concluida)
     }
 
     @Test
@@ -64,6 +67,33 @@ class TarefaDaoTest {
         dao.deletar(inserida)
 
         val tarefas = dao.listarTodas().first()
-        Assert.assertTrue(tarefas.isEmpty())
+        assertTrue(tarefas.isEmpty())
+    }
+
+    @Test
+    fun tarefasComPrazoAparecemAntesDeAvulsasEOrdenadasPorProximidade() = runTest {
+        val agora = System.currentTimeMillis()
+
+        dao.inserir(Tarefa(titulo = "Avulsa", descricao = ""))
+        dao.inserir(
+            Tarefa(
+                titulo = "Prazo distante",
+                descricao = "",
+                dataHora = agora + 100_000
+            )
+        )
+        dao.inserir(
+            Tarefa(
+                titulo = "Prazo proximo",
+                descricao = "",
+                dataHora = agora + 10_000
+            )
+        )
+
+        val tarefas = dao.listarTodas().first()
+
+        assertEquals("Prazo proximo", tarefas[0].titulo)
+        assertEquals("Prazo distante", tarefas[1].titulo)
+        assertEquals("Avulsa", tarefas[2].titulo)
     }
 }
