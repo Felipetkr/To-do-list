@@ -30,14 +30,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.felipetkr.todolist.data.Tarefa
+import com.github.felipetkr.todolist.util.formatarDataHora
 import com.github.felipetkr.todolist.viewModel.TarefaViewModel
-
 
 @Composable
 fun ListaTarefasScreen(
@@ -54,7 +56,9 @@ fun ListaTarefasScreen(
         onCheckedChange = { tarefa, concluida ->
             viewModel.atualizar(tarefa.copy(concluida = concluida))
         },
-        onDeletar = { tarefa -> viewModel.deletar(tarefa) }
+        onDeletar = { tarefa ->
+            viewModel.deletar(tarefa)
+        }
     )
 }
 
@@ -69,11 +73,18 @@ fun ListaTarefasContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Minhas Tarefas") })
+            TopAppBar(
+                title = {
+                    Text("Minhas Tarefas")
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onNovaTarefa) {
-                Icon(Icons.Default.Add, contentDescription = "Nova tarefa")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Nova tarefa"
+                )
             }
         }
     ) { padding ->
@@ -100,8 +111,12 @@ fun ListaTarefasContent(
                         onCheckedChange = { concluida ->
                             onCheckedChange(tarefa, concluida)
                         },
-                        onEditar = { onEditarTarefa(tarefa.id) },
-                        onDeletar = { onDeletar(tarefa) }
+                        onEditar = {
+                            onEditarTarefa(tarefa.id)
+                        },
+                        onDeletar = {
+                            onDeletar(tarefa)
+                        }
                     )
                 }
             }
@@ -129,7 +144,9 @@ private fun TarefaItem(
                 checked = tarefa.concluida,
                 onCheckedChange = onCheckedChange
             )
+
             Spacer(modifier = Modifier.width(8.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = tarefa.titulo,
@@ -140,6 +157,7 @@ private fun TarefaItem(
                         TextDecoration.None
                     }
                 )
+
                 if (tarefa.descricao.isNotBlank()) {
                     Text(
                         text = tarefa.descricao,
@@ -148,10 +166,31 @@ private fun TarefaItem(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                if (tarefa.dataHora != null) {
+                    val atrasada = tarefa.dataHora < System.currentTimeMillis() &&
+                            !tarefa.concluida
+
+                    Text(
+                        text = formatarDataHora(tarefa.dataHora),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (atrasada) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            Color.Unspecified
+                        },
+                        fontWeight = if (atrasada) {
+                            FontWeight.Bold
+                        } else {
+                            FontWeight.Normal
+                        }
+                    )
+                }
             }
+
             IconButton(onClick = onDeletar) {
                 Icon(
-                    Icons.Default.Delete,
+                    imageVector = Icons.Default.Delete,
                     contentDescription = "Deletar tarefa"
                 )
             }
@@ -221,6 +260,44 @@ private fun TarefaItemConcluidaPreview() {
             titulo = "Enviar atividade",
             descricao = "Upload no portal da FIAP",
             concluida = true
+        ),
+        onCheckedChange = {},
+        onEditar = {},
+        onDeletar = {}
+    )
+}
+
+@Preview(showBackground = true, name = "Item com prazo futuro")
+@Composable
+private fun TarefaItemComPrazoPreview() {
+    val prazo = System.currentTimeMillis() + 86_400_000L
+
+    TarefaItem(
+        tarefa = Tarefa(
+            id = 3,
+            titulo = "Entregar atividade",
+            descricao = "Upload no portal da FIAP",
+            concluida = false,
+            dataHora = prazo
+        ),
+        onCheckedChange = {},
+        onEditar = {},
+        onDeletar = {}
+    )
+}
+
+@Preview(showBackground = true, name = "Item atrasado")
+@Composable
+private fun TarefaItemAtrasadaPreview() {
+    val prazo = System.currentTimeMillis() - 86_400_000L
+
+    TarefaItem(
+        tarefa = Tarefa(
+            id = 4,
+            titulo = "Entregar atividade",
+            descricao = "Upload no portal da FIAP",
+            concluida = false,
+            dataHora = prazo
         ),
         onCheckedChange = {},
         onEditar = {},
