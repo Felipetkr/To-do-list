@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "carreiras.com.github.todolist"
+    namespace = "com.github.felipetkr.todolist"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "carreiras.com.github.todolist"
+        applicationId = "com.github.felipetkr.todolist"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
